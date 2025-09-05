@@ -13,6 +13,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("edurex backend is running...");
 });
+app.get("/api/course", (req, res) => {
+  res.json({ status: "ok", message: "Backend is connected" });
+});
 
 // Mongo connect
 mongoose

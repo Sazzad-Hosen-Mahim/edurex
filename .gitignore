@@ -1,0 +1,12 @@
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Env files
+.env
+
+# Build
+client/.next
+client/out
+server/dist

@@ -1,29 +1,39 @@
 import express from "express";
 import cors from "cors";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 
+// Routes
+import courseRoutes from "./routes/courseRoute";
+import moduleRoutes from "./routes/moduleRoute";
+import lectureRoutes from "./routes/lectureRoute";
+import progressRoutes from "./routes/progressRoute";
+import { connectDB } from "./config/db";
+
 dotenv.config();
+
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Basic route
-app.get("/", (req, res) => {
-  res.send("edurex backend is running...");
-});
-app.get("/api/course", (req, res) => {
-  res.json({ status: "ok", message: "Backend is connected" });
+// Health check
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", message: "Edurex backend is running 🎉" });
 });
 
-// Mongo connect
-mongoose
-  .connect(process.env.MONGO_URI || "")
-  .then(() => console.log("mongodb is connected"))
-  .catch((err) => console.error(err));
+// API routes
+app.use("/api/courses", courseRoutes);
+app.use("/api/modules", moduleRoutes);
+app.use("/api/lectures", lectureRoutes);
+app.use("/api/progress", progressRoutes);
 
+// Connect DB & start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
+const MONGO_URI = process.env.MONGO_URI || "";
+
+connectDB(MONGO_URI).then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+});

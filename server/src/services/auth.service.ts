@@ -6,7 +6,7 @@ export async function register(
   password: string,
   role: "admin" | "user" = "user"
 ) {
-  const user = await User.create({ email, password, role });
+  const user = await User.create({ email, password, role: "user" });
   return { id: user._id, email: user.email, role: user.role };
 }
 

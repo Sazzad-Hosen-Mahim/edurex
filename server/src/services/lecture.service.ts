@@ -15,6 +15,10 @@ export const getLecturesByModule = async (moduleId: string) => {
   return await Lecture.find({ module: moduleId });
 };
 
+export const updateLecture = async (id: string, data: any) => {
+  return await Lecture.findByIdAndUpdate(id, data, { new: true });
+};
+
 export const deleteLecture = async (id: string) => {
   return await Lecture.findByIdAndDelete(id);
 };

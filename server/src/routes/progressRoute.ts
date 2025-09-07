@@ -1,37 +1,48 @@
 import { Router } from "express";
 import * as progressService from "../services/progress.service";
+import { authMiddleware } from "../middlewares/auth";
 
 const router = Router();
 
-// Mark a lecture complete
-router.post("/complete/:courseId/:lectureIndex", async (req, res) => {
+// Enroll in course
+router.post("/enroll/:courseId", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.body;
-    const { courseId, lectureIndex } = req.params;
-
-    const progress = await progressService.markLectureComplete(
-      userId,
-      courseId,
-      parseInt(lectureIndex, 10) // convert string to number
+    const progress = await progressService.enrollCourse(
+      (req as any).user.id,
+      req.params.courseId
     );
-
-    res.json(progress);
+    res.json({ success: true, progress });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
-// Get user progress for a course
-router.get("/:userId/:courseId", async (req, res) => {
+// Get all my courses with progress
+router.get("/my-courses", authMiddleware, async (req, res) => {
   try {
-    const { userId, courseId } = req.params;
-
-    const progress = await progressService.getUserProgress(userId, courseId);
-
-    res.json(progress);
+    const courses = await progressService.getUserCourses((req as any).user.id);
+    res.json({ success: true, courses });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
+
+// Mark lecture as complete
+router.post(
+  "/:courseId/complete/:lectureId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const progress = await progressService.completeLecture(
+        (req as any).user.id,
+        req.params.courseId,
+        parseInt(req.params.lectureId, 10)
+      );
+      res.json({ success: true, progress });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+);
 
 export default router;

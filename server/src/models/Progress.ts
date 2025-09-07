@@ -1,21 +1,28 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model, InferSchemaType } from "mongoose";
 
 const progressSchema = new Schema(
   {
-    userId: { type: Types.ObjectId, ref: "User", index: true, required: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      index: true,
+      required: true,
+    },
     courseId: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "Course",
       index: true,
       required: true,
     },
-    completedBitmap: { type: Buffer, required: true },
-    completedCount: { type: Number, default: 0 },
+    completedLectures: [{ type: Schema.Types.ObjectId, ref: "Lecture" }],
     lastUnlocked: { type: Number, default: 1 },
+    completedCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
 progressSchema.index({ userId: 1, courseId: 1 }, { unique: true });
 
-export default model("Progress", progressSchema);
+type ProgressDoc = InferSchemaType<typeof progressSchema>;
+
+export default model<ProgressDoc>("Progress", progressSchema);

@@ -15,7 +15,7 @@ export const createModule = async (courseId: string, data: any) => {
 };
 
 export const getModulesByCourse = async (courseId: string) => {
-  return await Module.find({ course: courseId }).populate("lectures");
+  return await Module.find({ course: courseId });
 };
 
 export const deleteModule = async (id: string) => {

@@ -1,15 +1,8 @@
 import { Router } from "express";
 import * as lectureService from "../services/lecture.service";
+import { authMiddleware, roleMiddleware } from "../middlewares/auth";
 
 const router = Router();
-
-router.post("/:moduleId", async (req, res) => {
-  const lecture = await lectureService.createLecture(
-    req.params.moduleId,
-    req.body
-  );
-  res.json(lecture);
-});
 
 router.get("/:moduleId", async (req, res) => {
   const lectures = await lectureService.getLecturesByModule(
@@ -18,9 +11,36 @@ router.get("/:moduleId", async (req, res) => {
   res.json(lectures);
 });
 
-router.delete("/:id", async (req, res) => {
-  await lectureService.deleteLecture(req.params.id);
-  res.json({ success: true });
-});
+router.post(
+  "/:moduleId",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  async (req, res) => {
+    const lecture = await lectureService.createLecture(
+      req.params.moduleId,
+      req.body
+    );
+    res.json(lecture);
+  }
+);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  async (req, res) => {
+    const lecture = await lectureService.updateLecture(req.params.id, req.body);
+    res.json(lecture);
+  }
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["admin"]),
+  async (req, res) => {
+    await lectureService.deleteLecture(req.params.id);
+    res.json({ success: true });
+  }
+);
 
 export default router;

@@ -2,7 +2,13 @@ import Lecture from "../models/Lecture";
 import Module from "../models/Module";
 
 export const createLecture = async (moduleId: string, data: any) => {
-  const lecture = new Lecture({ ...data, module: moduleId });
+  const module = await Module.findById(moduleId);
+  if (!module) throw new Error("Module not found");
+  const lecture = new Lecture({
+    ...data,
+    moduleId: module._id,
+    courseId: module.courseId,
+  });
   await lecture.save();
 
   await Module.findByIdAndUpdate(moduleId, {

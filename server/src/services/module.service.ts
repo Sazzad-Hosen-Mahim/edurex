@@ -6,7 +6,7 @@ export const createModule = async (courseId: string, data: any) => {
   const module = new Module({
     ...data,
     moduleNumber: count + 1,
-    course: courseId,
+    courseId,
   });
   await module.save();
 
@@ -15,7 +15,7 @@ export const createModule = async (courseId: string, data: any) => {
 };
 
 export const getModulesByCourse = async (courseId: string) => {
-  return await Module.find({ course: courseId });
+  return await Module.find({ courseId });
 };
 
 export const deleteModule = async (id: string) => {

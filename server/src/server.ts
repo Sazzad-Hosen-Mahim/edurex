@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 
 // Routes
 import authRoutes from "./routes/authRoute";
@@ -10,7 +12,6 @@ import lectureRoutes from "./routes/lectureRoute";
 import progressRoutes from "./routes/progressRoute";
 import { connectDB } from "./config/db";
 import { seedAdmin } from "./seedAdmin";
-dotenv.config();
 
 const app = express();
 
@@ -33,6 +34,8 @@ app.use("/api/progress", progressRoutes);
 // Connect DB & start server
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "";
+
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 connectDB(MONGO_URI).then(async () => {
   await seedAdmin();

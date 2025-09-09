@@ -1,6 +1,8 @@
 import Progress from "../models/Progress";
 import Lecture from "../models/Lecture";
 import { Types } from "mongoose";
+import Module from "../models/Module";
+import Course from "../models/Course";
 
 // Enroll in a course
 export const enrollCourse = async (userId: string, courseId: string) => {
@@ -18,24 +20,54 @@ export const enrollCourse = async (userId: string, courseId: string) => {
 };
 
 // Get all courses with progress for a user
-export const getUserCourses = async (userId: string) => {
-  const progresses = await Progress.find({ userId })
-    .populate("courseId")
-    .populate("completedLectures");
+// export const getUserCourses = async (userId: string) => {
+//   const progresses = await Progress.find({ userId })
+//     .populate("courseId")
+//     .populate("completedLectures");
 
-  return Promise.all(progresses.map((p) => addProgressPercent(p)));
+//   return Promise.all(progresses.map((p) => addProgressPercent(p)));
+// };
+
+export const getUserCourses = async (userId: string) => {
+  const progresses = await Progress.find({ userId }).populate(
+    "completedLectures"
+  );
+
+  const results = [];
+
+  for (const p of progresses) {
+    const course = await Course.findById(p.courseId);
+    if (!course) continue;
+
+    const modules = await Module.find({ courseId: course._id });
+
+    // Fetch lectures for each module
+    const modulesWithLectures = await Promise.all(
+      modules.map(async (mod) => {
+        const lectures = await Lecture.find({ moduleId: mod._id });
+        return { ...mod.toObject(), lectures };
+      })
+    );
+
+    const progressWithModules = {
+      ...p.toObject(),
+      courseId: { ...course.toObject(), modules: modulesWithLectures },
+    };
+
+    results.push(await addProgressPercent(progressWithModules));
+  }
+
+  return results;
 };
 
-// Mark lecture as completed (sequential unlock)
 export const completeLecture = async (
   userId: string,
   courseId: string,
-  lectureOrder: number // instead of lectureId, we use lecture order
+  lectureOrder: number
 ) => {
   const progress = await Progress.findOne({ userId, courseId });
   if (!progress) throw new Error("User not enrolled in course");
 
-  // Only allow completing the "last unlocked" lecture
   if (lectureOrder !== progress.lastUnlocked) {
     throw new Error(`You must complete lecture ${progress.lastUnlocked} first`);
   }
@@ -50,7 +82,7 @@ export const completeLecture = async (
   // Save completed lecture
   if (!progress.completedLectures.includes(lecture._id as Types.ObjectId)) {
     progress.completedLectures.push(lecture._id);
-    progress.lastUnlocked = lectureOrder + 1; // unlock next
+    progress.lastUnlocked = lectureOrder + 1;
     progress.completedCount = progress.completedLectures.length;
     await progress.save();
   }
@@ -61,15 +93,15 @@ export const completeLecture = async (
 // add progress percent
 const addProgressPercent = async (progress: any) => {
   const totalLectures = await Lecture.countDocuments({
-    courseId: progress.courseId,
+    courseId: progress.courseId._id || progress.courseId,
   });
   const completed = progress.completedLectures.length;
   const percent =
     totalLectures > 0 ? Math.round((completed / totalLectures) * 100) : 0;
 
   return {
-    ...progress.toObject(),
+    ...progress,
     progressPercent: percent,
-    nextLecture: progress.lastUnlocked, // tells frontend which lecture is next
+    nextLecture: progress.lastUnlocked,
   };
 };
